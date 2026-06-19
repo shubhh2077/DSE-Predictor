@@ -138,7 +138,10 @@ export function PredictionForm() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-zinc-300">Category</label>
-                <Select value={category} onValueChange={setCategory}>
+                <Select
+                  value={category}
+                  onValueChange={(value) => setCategory(value ?? "")}
+                >
                   <SelectTrigger className="bg-zinc-900/50 border-white/10 text-white">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>

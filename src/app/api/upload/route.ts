@@ -50,7 +50,6 @@ export async function POST(request: Request) {
     // Insert data
     const result = await prisma.college.createMany({
       data: dataToInsert,
-      skipDuplicates: true
     });
 
     return NextResponse.json({ 
