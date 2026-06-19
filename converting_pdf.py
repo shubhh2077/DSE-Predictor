@@ -2,13 +2,13 @@ import pdfplumber
 import pandas as pd
 import re
 
-PDF_FILE = "Cutoff_PDFs/DSE_CAP1_CutOff_2025_26.pdf"
+PDF_FILE = "Cutoff_PDFs/DSE_CAP1_CutOff_2024_25.pdf"
 
 rows = []
 
 with pdfplumber.open(PDF_FILE) as pdf:
 
-    for page in pdf.pages:
+    for page_num, page in enumerate(pdf.pages, start=1):
 
         text = page.extract_text()
 
@@ -23,12 +23,15 @@ with pdfplumber.open(PDF_FILE) as pdf:
 
             line = lines[i]
 
-            # College name
+            # College line starts with 4 digit code
             if re.match(r"^\d{4}\s", line):
 
                 college_name = line
 
-                # Next line should contain choice code and course name
+                choice_code = None
+                course_name = None
+
+                # Parse Choice Code + Course Name
                 if i + 1 < len(lines):
 
                     info_line = lines[i + 1]
@@ -43,63 +46,106 @@ with pdfplumber.open(PDF_FILE) as pdf:
                         info_line
                     )
 
-                    if choice_match and course_match:
-
+                    if choice_match:
                         choice_code = choice_match.group(1)
+
+                    if course_match:
                         course_name = course_match.group(1).strip()
 
-                        # Categories
-                        if i + 2 < len(lines):
+                # Need enough lines to continue
+                if (
+                    choice_code
+                    and course_name
+                    and i + 5 < len(lines)
+                ):
 
-                            categories = lines[i + 2].split()
+                    categories = lines[i + 2].split()
+                    ranks = lines[i + 3].split()
 
-                        # Ranks
-                        if i + 3 < len(lines):
+                    percentiles = re.findall(
+                        r"\(([\d.]+)%\)",
+                        lines[i + 5]
+                    )
 
-                            ranks = lines[i + 3].split()
+                    # Skip malformed blocks
+                    if not (
+                        len(categories)
+                        == len(ranks)
+                        == len(percentiles)
+                    ):
+                        i += 1
+                        continue
 
-                        # Percentiles
-                        if i + 5 < len(lines):
+                    for cat, rank, perc in zip(
+                        categories,
+                        ranks,
+                        percentiles
+                    ):
 
-                            percentiles = re.findall(
-                                r"\(([\d.]+)%\)",
-                                lines[i + 5]
+                        try:
+
+                            rows.append(
+                                {
+                                    "college_name": college_name,
+                                    "choice_code": int(choice_code),
+                                    "course_name": course_name,
+                                    "category": cat.strip(),
+                                    "rank": rank.strip(),  # keep as TEXT
+                                    "percentile": float(perc),
+                                }
                             )
 
-                        if (
-                            len(categories)
-                            == len(ranks)
-                            == len(percentiles)
-                        ):
+                        except Exception as e:
 
-                            for cat, rank, perc in zip(
-                                categories,
-                                ranks,
-                                percentiles
-                            ):
-
-                                rows.append(
-                                    {
-                                        "college_name": college_name,
-                                        "choice_code": choice_code,
-                                        "course_name": course_name,
-                                        "category": cat,
-                                        "rank": int(rank),
-                                        "percentile": float(perc),
-                                    }
-                                )
+                            print(
+                                f"[ERROR] Page {page_num}"
+                            )
+                            print(
+                                f"College: {college_name}"
+                            )
+                            print(
+                                f"Course: {course_name}"
+                            )
+                            print(
+                                f"Category: {cat}"
+                            )
+                            print(
+                                f"Rank: {rank}"
+                            )
+                            print(
+                                f"Percentile: {perc}"
+                            )
+                            print(e)
 
             i += 1
 
 df = pd.DataFrame(rows)
 
-print(df.head())
+print("\n====================")
+print("EXTRACTION COMPLETE")
+print("====================")
+print(f"Rows extracted: {len(df)}")
 print()
-print("Rows extracted:", len(df))
+
+print(df.head())
+
+# Remove duplicates just in case
+df = df.drop_duplicates()
+
+print()
+print(f"Rows after dedupe: {len(df)}")
+
+OUTPUT_FILE = "Cutoff_CSVs/dse_cap1_cutoffs_2024.csv"
 
 df.to_csv(
-    "dse_cap1_cutoffs_2025.csv",
+    OUTPUT_FILE,
     index=False
 )
 
-print("Saved -> dse_cap1_cutoffs_2025.csv")
+print()
+print(f"Saved -> {OUTPUT_FILE}")
+
+print()
+print("Unique Colleges:", df["college_name"].nunique())
+print("Unique Branches:", df["course_name"].nunique())
+print("Unique Categories:", df["category"].nunique())
