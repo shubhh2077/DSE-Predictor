@@ -2,7 +2,7 @@ import pdfplumber
 import pandas as pd
 import re
 
-PDF_FILE = "DSE_CAP1_CutOff_2025_26.pdf"
+PDF_FILE = "Cutoff_PDFs/DSE_CAP1_CutOff_2025_26.pdf"
 
 rows = []
 
