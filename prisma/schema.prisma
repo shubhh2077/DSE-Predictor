@@ -1,0 +1,30 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model College {
+  id           String   @id @default(uuid())
+  year         Int
+  college_name String
+  choice_code  String
+  course_name  String
+  category     String
+  rank         Int
+  percentile   Float
+  city         String?
+  type         String?
+  autonomous   Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([year])
+  @@index([college_name])
+  @@index([course_name])
+  @@index([category])
+  @@index([city])
+}
