@@ -34,12 +34,40 @@ export function PredictionForm() {
   const [loading, setLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
 
+  // Load state from sessionStorage on mount
   useEffect(() => {
+    const savedState = sessionStorage.getItem('predictionState')
+    if (savedState) {
+      try {
+        const parsed = JSON.parse(savedState)
+        if (parsed.percentile) setPercentile(parsed.percentile)
+        if (parsed.category) setCategory(parsed.category)
+        if (parsed.selectedBranches) setSelectedBranches(parsed.selectedBranches)
+        if (parsed.selectedCities) setSelectedCities(parsed.selectedCities)
+        if (parsed.results) setResults(parsed.results)
+        if (parsed.hasSearched) setHasSearched(parsed.hasSearched)
+      } catch (e) {
+        console.error('Failed to parse saved state', e)
+      }
+    }
+
     fetch('/api/options')
       .then(res => res.json())
       .then(data => setOptions(data))
       .catch(console.error)
   }, [])
+
+  // Save state to sessionStorage whenever it changes
+  useEffect(() => {
+    sessionStorage.setItem('predictionState', JSON.stringify({
+      percentile,
+      category,
+      selectedBranches,
+      selectedCities,
+      results,
+      hasSearched
+    }))
+  }, [percentile, category, selectedBranches, selectedCities, results, hasSearched])
 
   const handlePredict = async (e: React.FormEvent) => {
     e.preventDefault()
