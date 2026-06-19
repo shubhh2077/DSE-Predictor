@@ -1,8 +1,14 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
+## **Visit this site to use it: https://dse-predictor.vercel.app/***
+
+**This project has used the Cap Round 1 Data Of Year 2024, 2025.**
+
+
 First, run the development server:
+
+For Running Locally:
 
 ```bash
 npm run dev
